@@ -64,7 +64,7 @@ flip `MYINVOIS_ENV=prod`.
 
 ## Phase 2 — Back office: supplier, clients, invoice defaults
 
-**Supplier profile — `~/.myinvois-profile.json`** (collect conversationally,
+**Supplier profile — `~/.myinvois-profile.csv` (key,value; Excel-friendly) or `.json`** (collect conversationally,
 validate TIN+BRN via API before saving):
 
 ```json
@@ -78,7 +78,7 @@ validate TIN+BRN via API before saving):
 }
 ```
 
-**Client book — `~/.myinvois-clients.json`** (`{"clients":[{name,tin,idType,idValue,email?,address?}]}`).
+**Client book — `~/.myinvois-clients.csv`** (columns: `name,tin,idType,idValue,email`; JSON also accepted).
 When the user names a buyer, look them up here first. When a new business buyer
 appears: get their BRN → `search-tin` → `validate-tin` → offer to save them.
 Consumers who don't request an e-invoice don't go in the book — they belong in

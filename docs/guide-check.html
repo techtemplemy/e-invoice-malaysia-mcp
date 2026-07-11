@@ -8,9 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="guide.css">
 </head>
-<body>
+<body data-flow="check">
 <div class="gnav"><a href="setup-guide.html">guide hub</a><span class="sep">·</span><a href="guide-access.html">① access</a><span class="sep">·</span><a href="guide-configure.html">② configure</a><span class="sep">·</span><a href="guide-submit.html">③ submit</a><span class="sep">·</span><a href="guide-check.html" class="on">④ check</a><span class="sep">·</span><a href="guide-selfbill.html">⑤ self-billed</a><span class="sep">·</span><a href="invoice-maker.html">invoice maker</a></div>
 <div class="sheet">
+<div id="journey-flow" aria-label="journey map"></div>
   <header class="head">
     <div class="eyebrow">e-Invois · LHDN Malaysia · journey ④ · whenever</div>
     <h1>Check invoices</h1>
@@ -23,8 +24,8 @@
   <div class="gen hero">
     <h3>🤖 Fastest path — say this to Claude</h3>
     <p class="priv">Works in Claude Code (myinvois skill) or any MCP client running <b>e-invoice-malaysia-mcp</b>. Copy, paste, done — or do it manually with the steps below.</p>
-    <div class="code" style="white-space:pre-wrap;padding-right:70px">Use the myinvois skill. Show my e-invoices from the last 31 days, and give me the full status and validation link for invoice INV-2026-0003.</div>
-    <button class="add" data-skill="check" type="button">📋 copy full skill.md for this journey — works with any AI, not just Claude</button>
+    <div class="code" style="white-space:pre-wrap;padding-right:70px">Use the my-einvois-check-skill. Show my e-invoices from the last 31 days, and give me the full status and validation link for invoice INV-2026-0003.</div>
+    <button class="add" data-skill="check" type="button">📋 copy skill.md — my-einvois-check-skill (all steps on this page, any AI)</button>
   </div>
 
   <!-- ============ 12 ============ -->

@@ -8,9 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="guide.css">
 </head>
-<body>
+<body data-flow="submit">
 <div class="gnav"><a href="setup-guide.html">guide hub</a><span class="sep">·</span><a href="guide-access.html">① access</a><span class="sep">·</span><a href="guide-configure.html">② configure</a><span class="sep">·</span><a href="guide-submit.html" class="on">③ submit</a><span class="sep">·</span><a href="guide-check.html">④ check</a><span class="sep">·</span><a href="guide-selfbill.html">⑤ self-billed</a><span class="sep">·</span><a href="invoice-maker.html">invoice maker</a></div>
 <div class="sheet">
+<div id="journey-flow" aria-label="journey map"></div>
   <header class="head">
     <div class="eyebrow">e-Invois · LHDN Malaysia · journey ③ · every invoice</div>
     <h1>Submit an e-invoice</h1>
@@ -23,8 +24,8 @@
   <div class="gen hero">
     <h3>🤖 Fastest path — say this to Claude</h3>
     <p class="priv">Works in Claude Code (myinvois skill) or any MCP client running <b>e-invoice-malaysia-mcp</b>. Copy, paste, done — or do it manually with the steps below.</p>
-    <div class="code" style="white-space:pre-wrap;padding-right:70px">Use the myinvois skill. Here's my invoice PDF — turn it into a MyInvois e-invoice: extract the buyer and line items, validate the buyer TIN, show me a summary for approval BEFORE submitting, then give me the validation link and a QR image.</div>
-    <button class="add" data-skill="submit" type="button">📋 copy full skill.md for this journey — works with any AI, not just Claude</button>
+    <div class="code" style="white-space:pre-wrap;padding-right:70px">Use the my-einvois-submit-skill. Here's my invoice PDF — turn it into a MyInvois e-invoice: extract the buyer and line items, validate the buyer TIN, show me a summary for approval BEFORE submitting, then give me the validation link and a QR image.</div>
+    <button class="add" data-skill="submit" type="button">📋 copy skill.md — my-einvois-submit-skill (all steps on this page, any AI)</button>
   </div>
 <!-- ============ 10 ============ -->
   <section class="step" data-step="10">
@@ -91,10 +92,10 @@ node skills/myinvois/scripts/myinvois.mjs submission <span class="y">&lt;submiss
 <script>
 const $=id=>document.getElementById(id);
 const PROMPTS={
-  pdf:(c,g)=>`Use the myinvois skill. Read the attached invoice PDF and turn it into a MyInvois e-invoice: extract the buyer and line items${c?` (the buyer is "${c}" from my client book at ~/.myinvois-clients.json)`:''}, validate the buyer TIN first, build the document from my supplier profile, show me a summary table for approval BEFORE submitting, then submit and give me the validation link and a QR image of it.${g?` Also: ${g}.`:''}`,
-  details:(c,g)=>`Use the myinvois skill. I want to issue an e-invoice${c?` to "${c}" from my client book`:''} — ask me for the line items (description, quantity, unit price) and anything else you need, validate the buyer TIN, show me a summary for approval before submitting, then submit and give me the validation link and QR.${g?` Also: ${g}.`:''}`,
-  selfbill:(c,g)=>`Use the myinvois skill. Attached is a receipt from my foreign vendor${c?` (${c})`:''}. Create a SELF-BILLED e-invoice (type 11): the vendor goes in the supplier block with generic TIN EI00000000030 and registration "NA", my company is the buyer. Show me the summary for approval before submitting, then submit and give me the validation link.${g?` Also: ${g}.`:''}`,
-  consol:(c,g)=>`Use the myinvois skill. Create this month's consolidated e-invoice to General Public (buyer TIN EI00000000010, classification code 004) — ask me for the period total, show me the summary for approval before submitting, then submit and give me the validation link.${g?` Also: ${g}.`:''}`,
+  pdf:(c,g)=>`Use the my-einvois-submit-skill. Read the attached invoice PDF and turn it into a MyInvois e-invoice: extract the buyer and line items${c?` (the buyer is "${c}" from my client book at ~/.myinvois-clients.json)`:''}, validate the buyer TIN first, build the document from my supplier profile, show me a summary table for approval BEFORE submitting, then submit and give me the validation link and a QR image of it.${g?` Also: ${g}.`:''}`,
+  details:(c,g)=>`Use the my-einvois-submit-skill. I want to issue an e-invoice${c?` to "${c}" from my client book`:''} — ask me for the line items (description, quantity, unit price) and anything else you need, validate the buyer TIN, show me a summary for approval before submitting, then submit and give me the validation link and QR.${g?` Also: ${g}.`:''}`,
+  selfbill:(c,g)=>`Use the my-einvois-selfbill-skill. Attached is a receipt from my foreign vendor${c?` (${c})`:''}. Create a SELF-BILLED e-invoice (type 11): the vendor goes in the supplier block with generic TIN EI00000000030 and registration "NA", my company is the buyer. Show me the summary for approval before submitting, then submit and give me the validation link.${g?` Also: ${g}.`:''}`,
+  consol:(c,g)=>`Use the my-einvois-submit-skill. Create this month's consolidated e-invoice to General Public (buyer TIN EI00000000010, classification code 004) — ask me for the period total, show me the summary for approval before submitting, then submit and give me the validation link.${g?` Also: ${g}.`:''}`,
 };
 function renderPrompt(){
   const el=$('prompt-out');

@@ -1,104 +1,227 @@
-// Granular skill.md excerpts, one per journey. The "copy skill instructions"
-// button on each guide page copies these — paste into any AI assistant
-// (Claude, or others) as working instructions for that journey.
+// Full skill.md per journey — the copy button on each guide page copies the
+// whole page's steps as a standalone skill. Paste into any AI assistant
+// (Claude, or others). Names are unique so you can install several at once.
 window.SKILL_SNIPPETS = {
 
-access: '# MyInvois skill — journey 1: get API access (one-time only)\n\
-\n\
-You are helping a Malaysian taxpayer get MyInvois (LHDN e-invoice) API\n\
-credentials. Guide them step by step; open portal pages for them when you can.\n\
-\n\
-1. Sandbox portal: https://preprod-mytax.hasil.gov.my — log in with personal\n\
-   ID (first time: use "First Time Login" to activate the sandbox account).\n\
-2. CRITICAL: switch the role dropdown to the COMPANY before anything else.\n\
-   An ERP registered under the personal profile owns the wrong TIN — every\n\
-   company invoice later fails with "authenticated TIN and documents TIN is\n\
-   not matching", and they must re-register.\n\
-3. MyInvois portal -> Taxpayer Profile -> Register ERP (any name, longest\n\
-   secret expiry). Client ID + Secret are shown ONCE — copy both immediately.\n\
-4. Save to ~/.myinvois.env:\n\
-   MYINVOIS_CLIENT_ID=...\n\
-   MYINVOIS_CLIENT_SECRET=...\n\
-   MYINVOIS_ENV=sandbox\n\
-5. Verify. CLI (clone https://github.com/techtemplemy/e-invoice-malaysia-mcp):\n\
-   node skills/myinvois/scripts/myinvois.mjs token\n\
-   node skills/myinvois/scripts/myinvois.mjs validate-tin <TIN> BRN <BRN>\n\
-   Or MCP: validate_tin via `npx -y e-invoice-malaysia-mcp`.\n\
-\n\
-Production later: same flow at https://mytax.hasil.gov.my (separate keys),\n\
-then MYINVOIS_ENV=prod. Never mix sandbox and production credentials.\n',
+access: [
+'---',
+'name: my-einvois-access-skill',
+'description: Get Malaysia MyInvois (LHDN e-invoice) API credentials for a company — guided portal walkthrough, sandbox first. One-time setup.',
+'---',
+'',
+'# my-einvois-access-skill — get API access (one-time only)',
+'',
+'You are helping a Malaysian taxpayer get MyInvois API credentials.',
+'Work step by step, one step at a time, and open portal pages for the user',
+'whenever you have browser access. Toolkit repo (CLI used below):',
+'https://github.com/techtemplemy/e-invoice-malaysia-mcp',
+'',
+'## Step 1 — prerequisites',
+'- Their TIN (company format C1234567890). Unknown? Check MyTax or e-Daftar.',
+'- A MyTax account as company director or appointed representative.',
+'- Node.js >= 18 on the machine (node --version).',
+'Sandbox is a full copy of production with fake data — always start there.',
+'',
+'## Step 2 — log in to the SANDBOX MyTax',
+'Portal: https://preprod-mytax.hasil.gov.my  (note the preprod- prefix).',
+'Log in with personal ID + digital certificate password. First time in the',
+'sandbox: the production account does NOT carry over — use "First Time Login".',
+'',
+'## Step 3 — switch role, open MyInvois',
+'On the MyTax dashboard, set the Role dropdown to the COMPANY (e.g. "Directors',
+'of the Company — X SDN BHD"), then open the MyInvois menu item. It opens',
+'preprod.myinvois.hasil.gov.my in a new tab.',
+'',
+'## Step 4 — Taxpayer Profile -> Register ERP',
+'In the MyInvois portal: top-right avatar -> View Taxpayer Profile ->',
+'"+ Register ERP". "ERP" = any system that talks to the API. Any name works;',
+'pick the longest client-secret expiry.',
+'CRITICAL: if step 3 was skipped and the ERP is registered under the PERSONAL',
+'profile, every company invoice later fails with "authenticated TIN and',
+'documents TIN is not matching" — they must re-register under the company.',
+'',
+'## Step 5 — copy the Client ID and Client Secret',
+'Shown ONCE after registering. If lost, register a new ERP. Sandbox and',
+'production credentials are completely separate pairs.',
+'',
+'## Step 6 — write ~/.myinvois.env',
+'MYINVOIS_CLIENT_ID=...',
+'MYINVOIS_CLIENT_SECRET=...',
+'MYINVOIS_ENV=sandbox',
+'(intermediaries acting for a taxpayer also add MYINVOIS_ONBEHALF=<TIN>)',
+'',
+'## Step 7 — verify the connection',
+'CLI:  node skills/myinvois/scripts/myinvois.mjs token',
+'      node skills/myinvois/scripts/myinvois.mjs validate-tin <TIN> BRN <BRN>',
+'MCP:  validate_tin via `npx -y e-invoice-malaysia-mcp`.',
+'Expect valid:true. Seeing invalid_client -> wrong environment or secret typo.',
+'',
+'Going live later: repeat steps 2-6 once at https://mytax.hasil.gov.my and',
+'flip MYINVOIS_ENV=prod. Nothing else changes.',
+].join('\n'),
 
-configure: '# MyInvois skill — journey 2: configure & setup (one-time only)\n\
-\n\
-Collect the seller’s details conversationally and VALIDATE the TIN+BRN pair\n\
-against LHDN before saving (CLI validate-tin, or MCP validate_tin).\n\
-\n\
-Write ~/.myinvois-profile.json (the seller — reused on every invoice):\n\
-{ "tin":"C...", "brn":"...", "sst":"NA", "ttx":"NA",\n\
-  "msic":"5-digit MSIC code", "businessActivity":"one line",\n\
-  "name":"REGISTERED COMPANY NAME",\n\
-  "address":{"line1":"...","city":"...","postcode":"...","stateCode":"01-17"},\n\
-  "phone":"+60...", "email":"...", "nextInvoiceNumber":"INV-2026-0001" }\n\
-\n\
-Write ~/.myinvois-clients.json (who they bill):\n\
-{ "clients":[ {"name":"...","tin":"C...","idType":"BRN","idValue":"...","email":"..."} ] }\n\
-\n\
-New business buyer: ask for their BRN -> search-tin (reverse lookup) ->\n\
-validate-tin -> offer to save to the client book.\n\
-Consumers who don’t request an e-invoice do NOT go in the book — they belong\n\
-in a monthly consolidated invoice (buyer TIN EI00000000010, classification 004).\n',
+configure: [
+'---',
+'name: my-einvois-configure-skill',
+'description: One-time back-office setup for Malaysia MyInvois e-invoicing — supplier profile and client book as simple CSV files, validated against LHDN.',
+'---',
+'',
+'# my-einvois-configure-skill — configure & setup (one-time only)',
+'',
+'You are setting up the local back office that every future e-invoice reuses.',
+'Two small files. CSV is preferred (business users can edit them in Excel);',
+'JSON with the same fields is also accepted by the tools.',
+'',
+'## Step 8 — supplier profile: ~/.myinvois-profile.csv',
+'Collect conversationally, then VALIDATE the TIN+BRN pair against LHDN before',
+'saving (CLI validate-tin, or MCP validate_tin). Format is key,value:',
+'',
+'key,value',
+'tin,C1234567890',
+'brn,202001234567',
+'sst,NA',
+'ttx,NA',
+'msic,62010',
+'businessActivity,Software development',
+'name,EXAMPLE SDN BHD',
+'addressLine1,"12, Jalan Contoh 3/4"',
+'city,Kuala Lumpur',
+'postcode,50000',
+'stateCode,14',
+'phone,+60123456789',
+'email,billing@example.com',
+'nextInvoiceNumber,INV-2026-0001',
+'',
+'Notes: MSIC = 5-digit business classification (on the SSM profile).',
+'stateCode 01-16 = Malaysian states (14 = W.P. Kuala Lumpur), 17 = n/a.',
+'SST / TTX stay literal NA unless registered. Quote values with commas.',
+'',
+'## Step 9 — client book: ~/.myinvois-clients.csv',
+'One row per business client. Get their TIN + BRN (they must provide it when',
+'they want e-invoices), or derive TIN from BRN, then validate:',
+'CLI:  search-tin BRN <brn>   then   validate-tin <tin> BRN <brn>',
+'MCP:  search_tin then validate_tin.',
+'',
+'name,tin,idType,idValue,email',
+'ACME SDN BHD,C1234567890,BRN,201901234567,accounts@acme.com',
+'',
+'idType is BRN for companies, NRIC for sole proprietors / individuals.',
+'Consumers who do not ask for an e-invoice do NOT go in the book — they',
+'belong in a monthly consolidated invoice (buyer TIN EI00000000010,',
+'classification code 004).',
+'',
+'When a new business buyer appears later, repeat the lookup-validate-save',
+'loop and append a row.',
+].join('\n'),
 
-submit: '# MyInvois skill — journey 3: submit an e-invoice\n\
-\n\
-From the user’s PDF (or chat details) extract: invoice number, buyer, line\n\
-items (description, qty, unit price), tax, totals. Seller details always come\n\
-from ~/.myinvois-profile.json — never the PDF. Missing data -> ask, don’t guess.\n\
-\n\
-Buyer TIN: check ~/.myinvois-clients.json first; else search-tin from their\n\
-BRN, then validate-tin. General Public buyer (EI00000000010) requires\n\
-classification code 004 on every line (LHDN rule ERR236).\n\
-\n\
-ALWAYS show a summary table (buyer, lines, totals, tax) and get an explicit\n\
-yes BEFORE submitting — this is a legal tax document.\n\
-\n\
-CLI:  submit invoice.json --stamp   then   submission <submissionUid>\n\
-MCP:  draft_invoice -> confirm_submission (two-step, one-time token)\n\
-\n\
-Afterwards deliver the validation link {portal}/{uuid}/share/{longId} and a\n\
-QR image (npx qrcode "<link>" -o qr.png) for the user to email their client.\n\
-Bump nextInvoiceNumber in the profile ONLY if the document came back Valid.\n',
+submit: [
+'---',
+'name: my-einvois-submit-skill',
+'description: Turn an invoice PDF or chat details into a validated Malaysia MyInvois e-invoice — extract, validate TIN, confirm with the user, submit, deliver link + QR.',
+'---',
+'',
+'# my-einvois-submit-skill — submit an e-invoice',
+'',
+'Prerequisites: working credentials (~/.myinvois.env), supplier profile',
+'(~/.myinvois-profile.csv or .json), optional client book',
+'(~/.myinvois-clients.csv). Toolkit: https://github.com/techtemplemy/e-invoice-malaysia-mcp',
+'',
+'## Step 10 — build and submit',
+'From the user\\u2019s PDF (or chat details) extract: invoice number, buyer,',
+'line items (description, qty, unit price), tax, totals. Seller details come',
+'from the profile, NEVER the PDF. Missing data -> ask, do not guess.',
+'',
+'The PDF must minimally contain: unique invoice number; line items; buyer',
+'name (+ TIN or BRN for business buyers unless already in the client book);',
+'totals and SST amount if charged. Issue date is optional — submission is',
+'re-stamped at send time anyway.',
+'',
+'Buyer TIN: check the client book first; else search-tin from their BRN,',
+'then validate-tin. General Public buyer (EI00000000010) requires',
+'classification code 004 on every line (LHDN rule ERR236).',
+'',
+'ALWAYS show a summary table (buyer, lines, totals, tax) and get an explicit',
+'yes BEFORE submitting — this is a legal tax document.',
+'',
+'CLI:  node skills/myinvois/scripts/myinvois.mjs submit invoice.json --stamp',
+'      node skills/myinvois/scripts/myinvois.mjs submission <submissionUid>',
+'MCP:  draft_invoice -> confirm_submission (two-step, one-time token).',
+'--stamp back-dates 5 minutes: LHDN rejects future-dated documents (CF321).',
+'',
+'## Step 11 — deliver',
+'Poll until Valid (seconds). Give the user the validation link',
+'{portal}/{uuid}/share/{longId} (portal = preprod.myinvois.hasil.gov.my or',
+'myinvois.hasil.gov.my) and a QR image of it:',
+'npx qrcode "<link>" -o invoice-qr.png',
+'The user emails their client the invoice PDF + link/QR (the static',
+'invoice-maker page can render a print-ready PDF with the QR embedded).',
+'Bump nextInvoiceNumber in the profile ONLY if the document came back Valid;',
+'Invalid documents never existed and their numbers may be reused.',
+'If validation fails, read the error details (document <uuid>), fix, resubmit.',
+].join('\n'),
 
-check: '# MyInvois skill — journey 4: check, cancel, reject\n\
-\n\
-Document statuses: Submitted (processing), Valid, Invalid, Cancelled.\n\
-\n\
-CLI:  recent direction=Sent status=Valid\n\
-      document <uuid>            (full details + share-link longId)\n\
-      cancel <uuid> <reason>     (issuer, within 72h of validation)\n\
-      reject <uuid> <reason>     (buyer side, within 72h)\n\
-MCP:  list_recent_documents, get_document, cancel_document, reject_document.\n\
-\n\
-Rules: after the 72h window, fix mistakes with a credit note (type 02)\n\
-referencing the original UUID instead of cancelling. Documents that came back\n\
-Invalid never legally existed — their invoice numbers may be reused. The\n\
-verify link {portal}/{uuid}/share/{longId} opens without any login.\n\
-Confirm with the user before any cancel or reject.\n',
+check: [
+'---',
+'name: my-einvois-check-skill',
+'description: Check Malaysia MyInvois e-invoice status and history; cancel or reject documents within the 72-hour window.',
+'---',
+'',
+'# my-einvois-check-skill — check, cancel, reject',
+'',
+'Prerequisites: working credentials in ~/.myinvois.env.',
+'Toolkit: https://github.com/techtemplemy/e-invoice-malaysia-mcp',
+'',
+'## Step 12 — check a document or the history',
+'Statuses: Submitted (processing, usually seconds), Valid, Invalid, Cancelled.',
+'CLI:  node skills/myinvois/scripts/myinvois.mjs recent direction=Sent status=Valid',
+'      node skills/myinvois/scripts/myinvois.mjs document <uuid>',
+'MCP:  list_recent_documents, get_document, get_submission.',
+'The verify link {portal}/{uuid}/share/{longId} opens without any login —',
+'that link is exactly what the QR on the invoice encodes.',
+'',
+'## Step 13 — cancel (or reject) within 72 hours',
+'Issuers have 72h from validation to cancel; after that fix mistakes with a',
+'credit note (type 02) referencing the original UUID. Buyers can reject',
+'documents they received, also within 72h.',
+'CLI:  node skills/myinvois/scripts/myinvois.mjs cancel <uuid> <reason>',
+'      node skills/myinvois/scripts/myinvois.mjs reject <uuid> <reason>',
+'MCP:  cancel_document, reject_document.',
+'Always confirm with the user (and require a reason) before cancelling or',
+'rejecting. Documents that came back Invalid never legally existed — their',
+'invoice numbers may be reused.',
+].join('\n'),
 
-selfbill: '# MyInvois skill — journey 5: self-billed e-invoice (foreign supplier)\n\
-\n\
-Foreign vendors (OpenAI, Hostinger, AWS...) never issue Malaysian e-invoices.\n\
-To claim the expense the USER issues one on the vendor’s behalf: a\n\
-SELF-BILLED invoice, type 11. The roles flip:\n\
-- Supplier = the foreign vendor — generic TIN EI00000000030, registration\n\
-  number "NA", their real country code (e.g. USA, LTU)\n\
-- Buyer = the user’s company, from ~/.myinvois-profile.json\n\
-- Deadline: end of the month AFTER payment\n\
-\n\
-Extract vendor name, amount, currency and date from the receipt; convert to\n\
-MYR if needed (ask the user which rate to use). Then the normal flow:\n\
-summary -> explicit yes -> submit -> validation link.\n\
-MCP: draft_invoice with typeCode "11".\n\
-\n\
-Warn once: imported services may also trigger reverse-charge service tax —\n\
-a separate filing; tell the user to confirm with their accountant.\n',
+selfbill: [
+'---',
+'name: my-einvois-selfbill-skill',
+'description: Create self-billed Malaysia MyInvois e-invoices (type 11) for foreign supplier bills like OpenAI, AWS or Hostinger, so the expense is claimable.',
+'---',
+'',
+'# my-einvois-selfbill-skill — record a foreign supplier bill',
+'',
+'Foreign vendors never issue Malaysian e-invoices. To claim the expense, the',
+'USER issues one on the vendor\\u2019s behalf: a SELF-BILLED invoice, type 11.',
+'Prerequisites: credentials + supplier profile (see the access and configure',
+'skills). Toolkit: https://github.com/techtemplemy/e-invoice-malaysia-mcp',
+'',
+'## Step 14 — the roles flip',
+'- Supplier = the foreign vendor: generic TIN EI00000000030, registration',
+'  number "NA", their real country code (e.g. USA, LTU, DEU).',
+'- Buyer = the user\\u2019s company, straight from the profile.',
+'- InvoiceTypeCode = "11" (self-billed invoice; 12-14 are self-billed',
+'  credit/debit/refund notes).',
+'- Deadline: issue by the END of the month AFTER payment.',
+'',
+'From the receipt extract: vendor name, country, amount, currency, date.',
+'Foreign currency -> ask the user which MYR rate to use and note it in the',
+'line description.',
+'',
+'Then the normal flow: show a summary -> explicit yes -> submit -> return the',
+'validation link. MCP: draft_invoice with typeCode "11" -> confirm_submission.',
+'CLI: build from the UBL template with type 11, then submit --stamp.',
+'',
+'Warn once: imported services can also trigger reverse-charge service tax —',
+'a separate filing from the e-invoice; tell the user to confirm with their',
+'accountant.',
+].join('\n'),
 };

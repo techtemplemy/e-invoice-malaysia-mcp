@@ -8,9 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="guide.css">
 </head>
-<body>
+<body data-flow="hub">
 <div class="gnav"><a href="setup-guide.html" class="on">guide hub</a><span class="sep">·</span><a href="guide-access.html">① access</a><span class="sep">·</span><a href="guide-configure.html">② configure</a><span class="sep">·</span><a href="guide-submit.html">③ submit</a><span class="sep">·</span><a href="guide-check.html">④ check</a><span class="sep">·</span><a href="guide-selfbill.html">⑤ self-billed</a><span class="sep">·</span><a href="invoice-maker.html">invoice maker</a></div>
 <div class="sheet">
+<div id="journey-flow" aria-label="journey map"></div>
   <header class="head">
     <div class="eyebrow">e-Invois · LHDN Malaysia · API onboarding</div>
     <h1>Setup Invois <span style="color:var(--chop)">#001</span></h1>
@@ -67,6 +68,7 @@
     <span><a href="https://sdk.myinvois.hasil.gov.my/">official SDK docs</a></span>
   </footer>
 </div>
+<script src="guide.js"></script>
 <script>
 let total=0;
 for(let i=1;i<=14;i++) if(localStorage.getItem('mi-step-'+i)==='1') total++;

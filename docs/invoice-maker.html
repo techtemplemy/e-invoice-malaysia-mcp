@@ -92,9 +92,23 @@ button.add:hover{border-style:solid}
 .sheet .pageno{font-size:10.5px;color:#8A8F9B;text-align:right;white-space:nowrap}
 .sheet .ei.hidden{visibility:hidden}
 
+.gnav{background:var(--ink);padding:10px 24px;display:flex;gap:4px 18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+.gnav a{color:#9FB0D4;text-decoration:none;padding:2px 0}
+.gnav a.on{color:var(--hi)}
+.gnav a:hover{color:#fff}
+.gnav .sep{color:#44547A}
+#journey-flow{padding:20px 24px 0;max-width:960px;margin:0 auto}
+#journey-flow a{text-decoration:none}
+#journey-flow a:hover rect,#journey-flow a:hover polygon{stroke:var(--hi);stroke-width:3px}
+.code{position:relative;background:var(--ink);color:#DCE4F5;font-family:var(--mono);font-size:11.5px;padding:12px 64px 12px 12px;margin:4px 0 10px;overflow:auto;white-space:pre-wrap;word-break:break-word;max-height:200px;line-height:1.6}
+.copy{position:absolute;top:6px;right:6px;font-family:var(--mono);font-size:10.5px;background:transparent;color:#9FB0D4;border:1px solid #44547A;padding:3px 8px;cursor:pointer}
+.copy:hover{color:var(--hi);border-color:var(--hi)}
+.copy.ok{color:#7BD9A8;border-color:#7BD9A8}
+#btn-skillmd{background:var(--hi);color:var(--ink);border:0;font-family:var(--mono);font-size:11.5px;font-weight:600;padding:6px 12px;cursor:pointer}
+
 @media print{
   body{background:#fff}
-  .topbar,.controls,.hint-print{display:none!important}
+  .gnav,#journey-flow,.topbar,.controls,.hint-print{display:none!important}
   .wrap{display:block;padding:0;max-width:none}
   .sheet{box-shadow:none;margin:0;width:auto;min-height:auto}
   .sheet-wrap{overflow:visible}
@@ -102,13 +116,17 @@ button.add:hover{border-style:solid}
 }
 </style>
 </head>
-<body>
+<body data-flow="maker">
 
+<div class="gnav"><a href="setup-guide.html">guide hub</a><span class="sep">·</span><a href="guide-access.html">① access</a><span class="sep">·</span><a href="guide-configure.html">② configure</a><span class="sep">·</span><a href="guide-submit.html">③ submit</a><span class="sep">·</span><a href="guide-check.html">④ check</a><span class="sep">·</span><a href="guide-selfbill.html">⑤ self-billed</a><span class="sep">·</span><a href="invoice-maker.html" class="on">invoice maker</a></div>
 <div class="topbar">
   <h1>Invoice Maker</h1>
   <span class="k">static · everything stays in your browser</span>
-  <a href="setup-guide.html">← setup guide</a>
+  <button id="btn-skillmd" type="button" style="margin-left:auto">📋 copy skill.md (this invoice)</button>
+  <a href="setup-guide.html" style="margin-left:0">← guide hub</a>
 </div>
+
+<div id="journey-flow" aria-label="journey map"></div>
 
 <div class="wrap">
   <!-- ============ controls ============ -->
@@ -166,6 +184,13 @@ button.add:hover{border-style:solid}
     </div>
     <p class="hint">Submit via the myinvois skill / MCP / CLI first, paste the returned link here — the QR proves this invoice is a registered e-invoice.</p>
 
+    <h2>Config — save / restore</h2>
+    <p class="hint" style="margin-top:0">This JSON is the whole invoice setup — copy it to save or share; paste one below to restore. The 📋 skill.md button up top wraps it with instructions for any AI. Logo is not embedded.</p>
+    <div class="code" id="cfg-out"></div>
+    <label for="cfg-in">Paste config JSON to restore</label>
+    <textarea id="cfg-in" placeholder='{ "seller": { ... }, "lines": [ ... ] }'></textarea>
+    <button class="add" id="cfg-apply" type="button">apply config</button>
+
     <div class="actions">
       <button id="btn-print" type="button">Print / save PDF</button>
       <button id="btn-reset" type="button">Reset</button>
@@ -207,6 +232,7 @@ button.add:hover{border-style:solid}
   </div></div>
 </div>
 
+<script src="guide.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const FONTS={
@@ -318,6 +344,75 @@ $('btn-reset').addEventListener('click',()=>{
   localStorage.removeItem('im-state');location.reload();
 });
 load();render();
+
+// ---------- config save/restore + skill.md utility ----------
+function buildConfig(){
+  return {
+    lookAndFeel:{ font:$('c-font').value, accent:$('c-accent').value, title:$('c-title').value },
+    seller:{ name:$('s-name').value, tin:$('s-tin').value, brn:$('s-brn').value, addressContact:$('s-addr').value },
+    invoice:{ number:$('i-no').value, date:$('i-date').value, notes:$('i-notes').value },
+    buyer:{ name:$('b-name').value, tin:$('b-tin').value, brn:$('b-brn').value, address:$('b-addr').value },
+    lines:[...document.querySelectorAll('.linerow')].map(r=>{
+      const v=k=>r.querySelector('[data-k="'+k+'"]').value;
+      return { description:v('desc'), quantity:+v('qty')||0, unitPrice:+v('price')||0, sstRate:+v('tax')||0 };
+    }).filter(l=>l.description||l.unitPrice),
+    einvoiceValidationLink:$('e-link').value
+  };
+}
+function applyConfig(c){
+  const L=c.lookAndFeel||{}, S=c.seller||{}, I=c.invoice||{}, B=c.buyer||{};
+  if(L.font)$('c-font').value=L.font;
+  if(L.accent)$('c-accent').value=L.accent;
+  if(L.title!=null)$('c-title').value=L.title;
+  $('s-name').value=S.name||'';$('s-tin').value=S.tin||'';$('s-brn').value=S.brn||'';$('s-addr').value=S.addressContact||'';
+  $('i-no').value=I.number||'';$('i-date').value=I.date||'';$('i-notes').value=I.notes||'';
+  $('b-name').value=B.name||'';$('b-tin').value=B.tin||'';$('b-brn').value=B.brn||'';$('b-addr').value=B.address||'';
+  document.querySelectorAll('.linerow').forEach(r=>r.remove());
+  ((c.lines&&c.lines.length)?c.lines:[{}]).forEach(l=>addLine({desc:l.description||'',qty:l.quantity??1,price:l.unitPrice??0,tax:String(l.sstRate??0)}));
+  $('e-link').value=c.einvoiceValidationLink||'';
+  render();
+}
+function renderCfg(){
+  const el=$('cfg-out');
+  el.childNodes.forEach(n=>{if(n.nodeType===3)n.remove();});
+  el.append(JSON.stringify(buildConfig(),null,2));
+}
+const _render=render;
+render=function(){_render();renderCfg();};
+renderCfg();
+document.addEventListener('input',()=>renderCfg());
+$('cfg-apply').addEventListener('click',()=>{
+  try{ applyConfig(JSON.parse($('cfg-in').value)); }
+  catch(e){ alert('That is not valid config JSON.'); }
+});
+$('btn-skillmd').addEventListener('click',()=>{
+  const md=[
+    '---',
+    'name: my-einvois-invoice-maker-skill',
+    'description: Recreate, update and send one specific customized invoice (preset layout, seller, buyer, lines) using the Malaysia e-invoice toolkit.',
+    '---','',
+    '# my-einvois-invoice-maker-skill \u2014 regenerate & send this exact invoice','',
+    '## Saved invoice config (JSON)','',
+    '\u0060\u0060\u0060json', JSON.stringify(buildConfig(),null,2), '\u0060\u0060\u0060','',
+    '## Instructions','',
+    '1. Recreate the visual invoice: open https://techtemplemy.github.io/e-invoice-malaysia-mcp/invoice-maker.html,',
+    '   paste the JSON above into "Config \u2014 save / restore" and click apply.',
+    '   The logo is not embedded \u2014 re-upload it if needed. Print / save as PDF.',
+    '2. For a NEW issue: bump invoice.number and set today\u2019s date first.',
+    '3. Make it a real LHDN e-invoice with my-einvois-submit-skill (or MCP',
+    '   draft_invoice -> confirm_submission via npx -y e-invoice-malaysia-mcp)',
+    '   using the buyer and lines above. Always show the user a summary and get',
+    '   an explicit yes before submitting.',
+    '4. Paste the returned validation link into the maker\u2019s e-invoice field so',
+    '   the QR renders, then re-save the PDF.',
+    '5. Email the PDF + validation link to the buyer contact.'
+  ].join('\n');
+  copyText(md).then(()=>{
+    const b=$('btn-skillmd'), t=b.textContent;
+    b.textContent='copied \u2713';
+    setTimeout(()=>{b.textContent=t;},1600);
+  });
+});
 </script>
 </body>
 </html>
